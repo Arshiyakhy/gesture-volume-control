@@ -1,6 +1,10 @@
 import cv2
 import mediapipe as mp
 import math
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.utils import AudioUtilities
+from pycaw.pycaw import IAudioEndpointVolume
 
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
@@ -8,6 +12,9 @@ mp_draw = mp.solutions.drawing_utils
 
 cap = cv2.VideoCapture(0)
 prev_angle = None
+current_vol = 0.5
+devices = AudioUtilities.GetSpeakers()
+volume_ctrl = devices.EndpointVolume
 
 while True:
     ret, frame = cap.read()
@@ -36,12 +43,17 @@ while True:
                 )
                 if prev_angle is not None:
                     delta = angle - prev_angle
-                    print(delta)
+                    if delta > math.pi:
+                        delta -= 2 * math.pi
+                    if delta < -math.pi:
+                        delta += 2 * math.pi
+                    current_vol -= delta * 0.1
+                    current_vol = max(0.0, min(1.0, current_vol))
+                    volume_ctrl.SetMasterVolumeLevelScalar(current_vol, None)
                 prev_angle = angle
 
     cv2.imshow("Gesture Volume", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
 cap.release()
 cv2.destroyAllWindows()
