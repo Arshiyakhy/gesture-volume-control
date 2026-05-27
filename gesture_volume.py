@@ -4,7 +4,7 @@ import math
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.utils import AudioUtilities
-from pycaw.pycaw import IAudioEndpointVolume
+import pyautogui
 
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
@@ -48,13 +48,14 @@ while True:
                     if delta < -math.pi:
                         delta += 2 * math.pi
                     if abs(delta) < 0.3:
-                        current_vol -= delta * 0.1
-                        current_vol = max(0.0, min(1.0, current_vol))
+                        if delta < 0:
+                            pyautogui.press('volumeup')
+                        elif delta > 0:
+                            pyautogui.press('volumedown')
                         print(f"vol: {current_vol:.2f} delta: {delta:.3f}")
                         volume_ctrl.SetMasterVolumeLevelScalar(
                             current_vol, None)
                 prev_angle = angle
-
     cv2.imshow("Gesture Volume", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
